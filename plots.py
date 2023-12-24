@@ -2,15 +2,23 @@ from bokeh.plotting import figure, show, Figure
 from bokeh.models import ColumnDataSource
 from typing import Iterable
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 
 @st.cache_resource
-def histogramnormal(data : Iterable, label : str = '', fig : Figure = None) -> Figure:
+def histogramnormal(data, label : str = '', fig = None) -> None:
+    data = pd.DataFrame(data)
+
+    data = data.loc[data.notnull()[data.columns[0]]]
+    data = data[data.columns[0]]
+
     freqs = dict()
     for each in data:
         if each in freqs : freqs[each] += 1
         else : freqs[each] = 1
+
+    print(freqs)
     
     keys = list(freqs.keys())
     keys.sort(key = lambda x: freqs[x], reverse = True)
@@ -51,10 +59,18 @@ def histogramnormal(data : Iterable, label : str = '', fig : Figure = None) -> F
         legend_label = label
     )
 
+    plot.xaxis.axis_label = 'value'
+    plot.yaxis.axis_label = 'frequency'
+
     return plot
 
 @st.cache_resource
 def histogramdistribution(data : Iterable, nbins : int = 2, label : str = '', fig : Figure = None) -> Figure:
+    data = pd.DataFrame(data)
+
+    data = data.loc[data.notnull()[data.columns[0]]]
+    data = data[data.columns[0]]
+    
     freqs = dict()
     for each in data:
         if each in freqs : freqs[each] += 1
@@ -127,4 +143,36 @@ def histogramdistribution(data : Iterable, nbins : int = 2, label : str = '', fi
         legend_label = label
     )
     
+    plot.xaxis.axis_label = 'bins'
+    plot.yaxis.axis_label = 'frequency'
+
+    return plot
+
+
+@st.cache_resource
+def scatter(data : Iterable, label : str = '', fig : Figure = None) -> Figure:
+    data = pd.DataFrame(data)
+
+    data = data.loc[data.notnull()[data.columns[0]]]
+    data = data[data.columns[0]]
+
+    plot = figure() if fig is None else fig
+
+    csource = ColumnDataSource({
+        'x' : list(data.index),
+        'y' : data
+    })
+
+    plot.circle(
+        source = csource,
+        x = 'x',
+        y = 'y',
+        radius = 0.2,
+        alpha = 0.7,
+        legend_label = label
+    )
+
+    plot.xaxis.axis_label = 'index'
+    plot.yaxis.axis_label = 'value'
+
     return plot

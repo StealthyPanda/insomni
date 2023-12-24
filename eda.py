@@ -43,7 +43,7 @@ def filterif(frame : pd.DataFrame, conditional : Callable[[any], bool], columns 
     return frame
 
 
-def dropnulls(frame : pd.DataFrame, columns : List[str] = None) -> pd.DataFrame:
+def dropnulls(frame : pd.DataFrame, columns : List[str] = None) -> Tuple[pd.DataFrame, int]:
     """
     Drops all rows that contain a `null` or `NaN` value in any of the given column names.
     Returns a new frame.
@@ -57,14 +57,14 @@ def dropnulls(frame : pd.DataFrame, columns : List[str] = None) -> pd.DataFrame:
     for col in columns:
         for x in frame.index:
             try:
-                if np.isnan(frame.at[x, col]):
+                if pd.isna(frame.at[x, col]):
                     n += 1
                     frame.drop(x, axis = 0, inplace=True)
             except TypeError : pass
     
     print(f"Dropped {n} total rows with nulls from {columns}")
 
-    return frame
+    return frame, n
 
 
 
@@ -93,17 +93,18 @@ def assigntypes(frame : pd.DataFrame, columns : List[str] = None) -> pd.DataFram
 
 
 
-def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] | Any, columns : List[str] = None) -> pd.DataFrame:
+def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] | Any, columns : List[str] = None) -> Tuple[pd.DataFrame, int, int]:
     """
     Fills missing values in the dataframe (`nan` and `null` values) with the given value.
     value can be a single value, or a dictionary with columns as keys and values as the value to be filled.
-    Returns a new frame.
+    Returns a new frame, the no. of successful fills, the number of fails due to type error.
     """
     frame = frame.copy()
 
     #setting the proper value for columns
     if columns is None: columns = frame.columns
     
+    succ, fail = 0, 0
     #loop over columns
     for i in columns:
 
@@ -117,9 +118,12 @@ def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] | Any, columns : Li
         for each in frame.index:
             try:
                 #...check if it is NaN, if it is, place the default val here.
-                if np.isnan(frame.at[each, i]): frame.at[each, i] = val
-            except TypeError: pass
-    return frame
+                if np.isnan(frame.at[each, i]):
+                    frame.at[each, i] = val
+                    succ += 1
+            except TypeError:
+                fail += 1
+    return frame, succ, fail
 
 
 
