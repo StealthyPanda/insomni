@@ -93,7 +93,7 @@ def assigntypes(frame : pd.DataFrame, columns : List[str] = None) -> pd.DataFram
 
 
 
-def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] | Any, columns : List[str] = None) -> Tuple[pd.DataFrame, int, int]:
+def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] , columns : List[str] = None) -> Tuple[pd.DataFrame, int, int]:
     """
     Fills missing values in the dataframe (`nan` and `null` values) with the given value.
     value can be a single value, or a dictionary with columns as keys and values as the value to be filled.
@@ -253,8 +253,7 @@ def normalise(frame : pd.DataFrame, columns : list = None, measure : Literal['zf
 
 
 
-def splitframe(frame : pd.DataFrame, ratio : List[int], target : List[str] = None, shuffle : bool = True) -> List[pd.DataFrame | Tuple[pd.DataFrame, pd.DataFrame]]:
-
+def splitframe(frame : pd.DataFrame, ratio : List[int], target : List[str] = None, shuffle : bool = True) -> List[Tuple[pd.DataFrame, pd.DataFrame]]:
     """
     this function divides a pandas dataframe into sets according to the ratio provided
     ratio is a list of integers denoting the ratio in which to split the dataframe
