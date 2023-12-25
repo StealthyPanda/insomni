@@ -127,7 +127,7 @@ def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] , columns : List[st
 
 
 
-def reducenoise(frame : pd.DataFrame, tolerances : Dict[str, int | float] = None, columns : List[str] = None) -> Tuple[pd.DataFrame, int]:
+def reducenoise(frame : pd.DataFrame, tolerances : Dict[str, float] = None, columns : List[str] = None) -> Tuple[pd.DataFrame, int]:
     """
     Drops any row of the frame where the value's distance from the mean is more than the given tolerance.
     If tolerance is not provided for a column, standard deivation value of that column is used.
