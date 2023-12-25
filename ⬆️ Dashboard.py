@@ -1,15 +1,10 @@
 import streamlit as st
 import pandas as pd
 from io import StringIO
-# import matplotlib.pyplot as plt
-# import seaborn as sns
-from bokeh.plotting import figure, show
-from bokeh.models import ColumnDataSource
-import numpy as np
 from eda import assigntypes
-from plots import histogramnormal, histogramdistribution, scatter
 import plotly.express as px
 import plotly.figure_factory as ff
+import seaborn as sns
 
 
 
@@ -40,6 +35,8 @@ st.session_state['xuniques'] = xuniques
 #importing file stuff
 rawframe = None
 
+snsgdn = sns.get_dataset_names()
+
 @st.cache_data
 def filefetcher(rawfile):
     try:
@@ -52,18 +49,28 @@ def filefetcher(rawfile):
     return rawframe
 
 
+
+
 if 'daframe' in st.session_state:
     rawframe = st.session_state['daframe']
 else:
     rawfile = st.sidebar.file_uploader( 
-        'Import a dataset (*.csv)',
+        'Upload a dataset',
+        type = 'csv',
         key = 'datafile',
         # help = 'Upload a dataset'
     )
-    if rawfile is None:
-        st.markdown('##### Start by uploading a dataset to work on in the sidebar!')
+    st.sidebar.header('OR')
+    sample = st.sidebar.selectbox('Choose a sample dataset', snsgdn, index = None)
+
+
+    if (rawfile is None) and (sample is None):
+        st.markdown('##### Start by uploading a dataset to work on in the sidebar.')
         exit()
-    rawframe = filefetcher(rawfile)
+    elif rawfile is not None:
+        rawframe = filefetcher(rawfile)
+    else:
+        rawframe = sns.load_dataset(sample)
 
 nrows = len(rawframe)
 largeset = nrows > rowsthresh
@@ -143,11 +150,6 @@ plottabs = botright.tabs(tabs)
 #--------------------------------------------------------------------------------------------------------------------------
 #basic plots (bottom right stuff)
 
-#histplot stuff
-# hplot = histogramnormal(displayframe[field], label = field)
-# hplot.title = f'`{field}` column histogram'
-# hplot.height = 350
-
 histplot = px.histogram(displayframe, x = field)
 histplot.update_layout(
     title_text = f'Histogram for `{field}` column'
@@ -158,44 +160,23 @@ with plottabs[0]:
     if len(displayframe[field].unique()) > xuniques:
         if ('forceshowplot' not in st.session_state) or (not st.session_state['forceshowplot']):
             plottabs[0].markdown(f'#### This plot contains too many unique values on x axis (> {xuniques})')
-            # if not st.session_state['forceshowplot']:
-            #     plottabs[0].markdown(f'#### This plot contains too many unique values on x axis (> {xuniques})')
-        # else:
-        #     plottabs[0].markdown(f'#### This plot contains too many unique values on x axis (> {xuniques})')
-            
         if plottabs[0].checkbox('Show anyway', help = 'Plotting may take a while', key = 'forceshowplot'):
-            # plottabs[0].bokeh_chart(hplot, use_container_width = True)
             plottabs[0].plotly_chart(histplot, use_container_width=True)
     else:
-        # plottabs[0].bokeh_chart(hplot, use_container_width = True)
         plottabs[0].plotly_chart(histplot, use_container_width=True)
 
 
 #plotting the distribution if it is a numerical field
 if isnum:
     with plottabs[1]:
-        # nbins = plottabs[1].number_input(
-        #     'No. of bins',
-        #     min_value = 2,
-        #     value = 2,
-        #     step = 1
-        # )
-        # dplot = histogramdistribution(displayframe[field], nbins = nbins, label = field)
         distplot = ff.create_distplot([displayframe[field][displayframe[field].notnull()]], [field])
         distplot.update_layout(
             title_text = f'Distplot for `{field}` column',
             yaxis_title = 'frequency',
             xaxis_title = 'value',
         )
-        # dplot.title = f'`{field}` column distribution'
-        # dplot.height = 350
-        # plottabs[1].bokeh_chart(dplot, use_container_width = True)
         plottabs[1].plotly_chart(distplot, use_container_width = True)
     with plottabs[2]:
-        # dplot = scatter(displayframe[field], label = field)
-        # dplot.title = f'`{field}` scatter plot'
-        # dplot.height = 350
-        # plottabs[2].bokeh_chart(dplot, use_container_width = True)
         splot = px.scatter(displayframe, x=displayframe.index, y=field, title=f'Scatter plot for `{field}` column')
         plottabs[2].plotly_chart(splot, use_container_width=True)
 

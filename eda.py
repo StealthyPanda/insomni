@@ -127,27 +127,30 @@ def fillmissing(frame : pd.DataFrame, value : Dict[str, Any] | Any, columns : Li
 
 
 
-def reducenoise(frame : pd.DataFrame, tolerances : Dict[str, int | float] = None, columns : List[str] = None) -> pd.DataFrame:
+def reducenoise(frame : pd.DataFrame, tolerances : Dict[str, int | float] = None, columns : List[str] = None) -> Tuple[pd.DataFrame, int]:
     """
     Drops any row of the frame where the value's distance from the mean is more than the given tolerance.
     If tolerance is not provided for a column, standard deivation value of that column is used.
     Works only on numeric valued columns.
-    Returns a new frame.
+    Returns a new frame, and number of rows dropped.
     """
     frame = frame.copy()
 
     if columns is None: columns = frame.columns
 
     print(f"Removing noise from {columns}")
+    n = 0
 
     for c in columns:
         if not pd.api.types.is_numeric_dtype(frame[c].dtype): continue
         m = frame[c].mean()
         t = tolerances[c] if tolerances is not None else frame[c].std()
         for r in frame.index:
-            if abs(frame.at[r, c] - m) > t : frame.drop(index = r, axis = 0, inplace = True)
+            if abs(frame.at[r, c] - m) > t :
+                frame.drop(index = r, axis = 0, inplace = True)
+                n += 1
     
-    return frame
+    return frame, n
 
 
 def categorise(frame : pd.DataFrame, columns : List[str] = None) -> Tuple[pd.DataFrame, Dict[str, Dict[int, str]]]:

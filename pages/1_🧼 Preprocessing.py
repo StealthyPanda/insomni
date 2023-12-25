@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import eda
+from typing import List, Tuple
 
 #--------------------------------------------------------------------------------------------------------------------------
 #misc setup stuff
@@ -27,7 +28,7 @@ st.session_state['allgood'] = False
 #--------------------------------------------------------------------------------------------------------------------------
 #main display section
 if 'daframe' not in st.session_state:
-    st.write('Upload data in the sidebar to get started!')
+    st.markdown('##### Start by uploading a dataset to work on in the sidebar.')
     exit()
 
 originalframe : pd.DataFrame = st.session_state['daframe']
@@ -35,20 +36,14 @@ originalframe : pd.DataFrame = st.session_state['daframe']
 mainpart, sidepart = st.columns([7, 3])
 botmain, botside = st.columns([7, 3])
 
-if 'colchanges' not in st.session_state:
-    displayframe = mainpart.data_editor(
-        originalframe,
-        use_container_width=True,
-        key = f"editedframe{st.session_state['efn']}",
-        num_rows='fixed', #TODO: Figure out how to make it dynamic, cuz dynamic changes are not showing up in the damn dataframe automatically,only in the frontend
-    )
-else:
-    displayframe = mainpart.data_editor(
-        st.session_state['colchanges'],
-        use_container_width=True,
-        key = f"editedframe{st.session_state['efn']}",
-        num_rows='fixed',
-    )
+# if 'colchanges' not in st.session_state:
+displayframe = mainpart.data_editor(
+    originalframe if 'colchanges' not in st.session_state else st.session_state['colchanges'],
+    use_container_width=True,
+    key = f"editedframe{st.session_state['efn']}",
+    num_rows='dynamic',
+    height=700,
+)
 
 nnulls = displayframe.isnull().sum().sum()
 
@@ -61,7 +56,7 @@ else:
     botmain.success('No null values in the dataframe!')
 #--------------------------------------------------------------------------------------------------------------------------
 
-
+sidepart.markdown('*Tip: use Shift + scroll to view all the operations below*')
 ops = sidepart.tabs([
     'Clean Column Names',
     'Drop Nulls',
@@ -69,6 +64,7 @@ ops = sidepart.tabs([
     'Fill Nulls',
     'Normalise',
     'Noise',
+    'Remove Columns',
 ])
 
 
@@ -80,26 +76,22 @@ ops = sidepart.tabs([
 
 def updatenames():
     global displayframe
-    cleaned = eda.cleancolumnnames(list(displayframe.columns))
     if 'colchanges' not in st.session_state:
         st.session_state['colchanges'] = displayframe.copy()
-    for i, each in enumerate(displayframe.columns):
-        if not st.session_state['unsc'][i]:
-            cleaned[i] = each
+    cleaned = []
+    for each in displayframe.columns:
+        if each in st.session_state['ccnc']:
+            cleaned.append(eda.cleancolumnnames([each])[0])
+        else:
+            cleaned.append(each)
+
     st.session_state['colchanges'].columns = cleaned
-    # sidepart.write(cleaned)
-    changes = {}
-    for each in range(len(displayframe.columns)):
-        changes[originalframe.columns[each]] = displayframe.columns[each]
     sidepart.info('Updated names!')
 
 def dropnulls():
     global displayframe
     mask = st.session_state['dnsc']
-    cols = []
-    for i, x in enumerate(displayframe.columns):
-        if mask[i]:cols.append(x)
-    newframe, ndrops = eda.dropnulls(displayframe, cols)
+    newframe, ndrops = eda.dropnulls(displayframe, mask)
     st.session_state['colchanges'] = newframe
     sidepart.info(f'Dropped `{ndrops}` rows.')
 
@@ -131,48 +123,115 @@ def castfield():
 
 
 def fillnulls():
-    cols = []
-    for i, each in enumerate(displayframe.columns):
-        if st.session_state['fnsc'][i]:
-            cols.append(each)
+    cols = st.session_state['fnsc']
     st.session_state['colchanges'], s, f = eda.fillmissing(displayframe, st.session_state['defval'], cols)
     ops[3].info(f'Filled null values; **{s}** successful fills and **{f}** failed fills.')
 
 
 def normaliseframe():
     global displayframe
-    mask = st.session_state['nsc']
-    cols = []
-    for i, x in enumerate(displayframe.columns):
-        if mask[i]:cols.append(x)
     try:
-        newframe = eda.normalise(displayframe, cols, st.session_state['nt'])
+        newframe = eda.normalise(displayframe, st.session_state['ntsc'], st.session_state['ntc'])
     except TypeError:
-        ops[4].info('Cannot normalise given set of fields!')
+        ops[4].error('Cannot normalise given set of fields!')
         return
     st.session_state['colchanges'] = newframe
     ops[4].info('Fields normalised!')
 
-with ops[0]:
-    ops[0].write('Select columns to clean:')
-    if not ops[0].checkbox('_All fields_', key = 'afcc', value = True):
-        selcols = [ops[0].checkbox(f'`{x}`', key = f'cbcc_{i}') for i, x in enumerate(displayframe.columns)]
+def getcolumns(parent : st.container, colprompt : str, frame : pd.DataFrame, keyheader : str) -> Tuple[List[str], st.container]:
+    cols = list(frame.columns)
+    lcols = len(cols)
+
+    selected = []
+
+    left, right = parent.columns(2)
+    left.write(colprompt)
+    selcols = [True for _ in range(len(frame.columns))]
+
+    if lcols <= 6:
+        if not left.checkbox('_All fields_', key = keyheader, value = True):
+            selcols = [left.checkbox(f'`{x}`', key = f'{keyheader}cbn_{i}') for i, x in enumerate(cols)]
+        for i, each in enumerate(selcols):
+            if each:selected.append(cols[i])
+        return selected, right
     else:
-        selcols = [True for _ in range(len(displayframe.columns))]
-    st.session_state['unsc'] = selcols
+        right.write('')
+        right.write('')
+        right.write('')
+        if not left.checkbox('_All fields_', key = keyheader, value = True):
+            selcolsleft = [left.checkbox(f'`{x}`', key = f'{keyheader}lcbn_{i}') for i, x in enumerate(cols[:len(cols)//2])]
+            selcolsright = [right.checkbox(f'`{x}`', key = f'{keyheader}rcbn_{i}') for i, x in enumerate(cols[len(cols)//2:])]
+            selcols = selcolsleft + selcolsright
+        for i, each in enumerate(selcols):
+            if each:selected.append(cols[i])
+        return selected, None
+
+
+
+def removenoise():
+    global displayframe
+
+    tols = st.session_state['tols']
+
+    if type(tols) == str:
+        tols = int(tols[0])
+        tolsframe = displayframe.describe().loc['std']
+        tolsframe = tolsframe.multiply(tols)
+        tols = tolsframe.to_dict()
+
+    try:
+        frame, n = eda.reducenoise(displayframe, tols, st.session_state['noisec'])
+    except ValueError:
+        ops[5].error('Couldnt perform noise reduction on the set of columns!')
+        return
+    
+    st.session_state['colchanges'] = frame
+    ops[5].info(f'Dropped **{n}** rows successfully!')
+
+
+
+
+
+def removecolumns():
+    global displayframe
+    try:
+        newframe = displayframe.drop(columns=st.session_state['rcc'])
+    except:
+        ops[6].error('Couldnt remove specified columns')
+        return
+    
+    st.session_state['colchanges'] = newframe
+    ops[6].info(f'Successfully dropped **{(st.session_state["rcc"])}**!')
+
+
+
+
+
+
+
+
+
+
+
+#Clean column names
+with ops[0]:
+    cols, right = getcolumns(
+        ops[0], 'Select columns to clean:', displayframe, 'ccn'
+    )
+
+    st.session_state['ccnc'] = cols
+
     ops[0].button('Update names', use_container_width=True, on_click=updatenames)
 
-
+#dropping nulls
 with ops[1]:
-    ops[1].write('Select columns to drop nulls from:')
-    if not ops[1].checkbox('_All fields_', key = 'afdn', value = True):
-        selcols = [ops[1].checkbox(f'`{x}`', key = f'cbdn_{i}') for i, x in enumerate(displayframe.columns)]
-    else:
-        selcols = [True for _ in range(len(displayframe.columns))]
+    selcols, right = getcolumns(
+        ops[1], 'Select columns to drop nulls:', displayframe, 'dn'
+    )
     st.session_state['dnsc'] = selcols
     ops[1].button('Drop null valued rows', use_container_width=True, on_click=dropnulls)
 
-
+#Casting types
 with ops[2]:
     field = ops[2].selectbox('Select a field', displayframe.columns, index = None)
     if field is not None:
@@ -183,16 +242,15 @@ with ops[2]:
         st.session_state['ctt'] = castto
         ops[2].button('Cast', use_container_width=True, on_click=castfield)
 
-with ops[3]:
-    left, right = ops[3].columns(2)
 
-    left.write('Select columns to fill nulls in:')
-    
-    if not left.checkbox('_All fields_', key = 'affn', value = True):
-        selcols = [left.checkbox(f'`{x}`', key = f'cbfn_{i}') for i, x in enumerate(displayframe.columns)]
-    else:
-        selcols = [True for _ in range(len(displayframe.columns))]
+#filling null values
+with ops[3]:
+    selcols, right = getcolumns(
+        ops[3], 'Fill nulls in:', displayframe, 'fn'
+    )
     st.session_state['fnsc'] = selcols
+
+    right = right if right is not None else ops[3]
 
     choice = right.selectbox('Value type', ['number', 'string', 'date/time'])
 
@@ -206,22 +264,65 @@ with ops[3]:
     ops[3].button('Fill null values', use_container_width=True, on_click=fillnulls)
 
 
-
+#normalising
 with ops[4]:
-    left, right = ops[4].columns(2)
+    cols, right = getcolumns(
+        ops[4], 'Columns to normalise:', displayframe, 'nt'
+    )
 
-    left.write('Select columns to normalise:')
-    
-    if not left.checkbox('_All fields_', key = 'nfn', value = True):
-        selcols = [left.checkbox(f'`{x}`', key = f'cbn_{i}') for i, x in enumerate(displayframe.columns)]
+    st.session_state['ntsc'] = cols
+
+    if right is not None:
+        st.session_state['ntc'] = right.selectbox('Technique', ntechs)
     else:
-        selcols = [True for _ in range(len(displayframe.columns))]
-    st.session_state['nsc'] = selcols
-
-    choice = right.selectbox('Technique', ntechs)
-    st.session_state['nt'] = choice
+        st.session_state['ntc'] = ops[4].selectbox('Technique', ntechs)
 
     ops[4].button('Normalise', use_container_width=True, on_click=normaliseframe)
+
+
+
+#noise
+with ops[5]:
+    cols, right = getcolumns(
+        ops[5], 'Select columns to filter with:', displayframe, 'rn'
+    )
+
+    st.session_state['noisec'] = cols
+
+    right = right if right is not None else ops[5]
+
+    if right.checkbox(
+        'Manual Tolerances',
+        help = 'Set tolerance value for each individual field (normally standard deviation of each field)'
+    ):
+        tols = displayframe.describe().loc['std']
+        tols.name = 'Tolerances'
+        tols.index.name = 'Fields'
+        tols = right.data_editor(
+            tols, use_container_width=True, hide_index=False
+        )
+
+        st.session_state['tols'] = tols.to_dict()
+
+    else:
+        val = right.radio('Select tolerance:', ['1σ', '2σ', '3σ'], horizontal=True)
+        st.session_state['tols'] = val
+    
+    ops[5].button('Reduce noise', use_container_width=True, on_click=removenoise)
+
+
+#Remove columns
+with ops[6]:
+    cols, right = getcolumns(
+        ops[6], 'Select columns to remove:', displayframe, 'rc'
+    )
+
+    st.session_state['rcc'] = cols
+    ops[6].button('Remove columns', use_container_width=True, on_click=removecolumns)
+
+
+
+
 
 #--------------------------------------------------------------------------------------------------------------------------
 
@@ -234,7 +335,7 @@ with ops[4]:
 
 
 def savebutton():
-    st.session_state['daframe'] = displayframe
+    st.session_state['daframe'] = displayframe.copy()
     sidepart.info('Dataframe changes saved!')
 
 def resetbutton():
