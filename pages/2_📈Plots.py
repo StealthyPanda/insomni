@@ -63,14 +63,18 @@ def plothist(parent : st.container):
     xsel = ops.selectbox('x axis', fields, key = 'hx')
     ysel = ops.selectbox('y axis', fields, key = 'phy', index = None)
     csel = ops.selectbox('color', fields, key = 'phc', index = None)
-    fig = px.histogram(
-        finalframe,
-        xsel, ysel, csel
-    )
-    main.plotly_chart(
-        fig,
-        use_container_width = True
-    )
+    try:
+        fig = px.histogram(
+            finalframe,
+            xsel, ysel, csel
+        )
+        main.plotly_chart(
+            fig,
+            use_container_width = True
+        )
+    except Exception:
+        main.error('Cannot plot using given fields!')
+        return
 
 def plotdist(parent : st.container):
     global fields, finalframe
@@ -107,13 +111,17 @@ def plotviolin(parent : st.container):
     xsel = ops.selectbox('x axis', fields, key = 'pvx')
     ysel = ops.selectbox('y axis', fields, key = 'pvy', index = None)
     csel = ops.selectbox('color', fields, key = 'pvc', index = None)
-    fig = px.violin(
-        finalframe, x = xsel, y = ysel, color = csel
-    )
-    main.plotly_chart(
-        fig,
-        use_container_width = True
-    )
+    try:
+        fig = px.violin(
+            finalframe, x = xsel, y = ysel, color = csel
+        )
+        main.plotly_chart(
+            fig,
+            use_container_width = True
+        )
+    except Exception:
+        main.error('Cannot plot using given fields!')
+        return
 
 def plotbox(parent : st.container):
     global fields, finalframe
@@ -121,13 +129,17 @@ def plotbox(parent : st.container):
     xsel = ops.selectbox('x axis', fields, key = 'pbx')
     ysel = ops.selectbox('y axis', fields, key = 'pby', index = None)
     csel = ops.selectbox('color', fields, key = 'pbc', index = None)
-    fig = px.box(
-        finalframe, xsel, ysel, csel
-    )
-    main.plotly_chart(
-        fig,
-        use_container_width = True
-    )
+    try:
+        fig = px.box(
+            finalframe, xsel, ysel, csel
+        )
+        main.plotly_chart(
+            fig,
+            use_container_width = True
+        )
+    except Exception:
+        main.error('Cannot plot using given fields!')
+        return
 
 def plotscatter(parent : st.container):
     global fields, finalframe
@@ -237,3 +249,4 @@ plottabs = pex.tabs([f'{plotnames[x]} Plot' for x in plots])
 for i, each in enumerate(plottabs):
     with each : plotdict[plots[i]](each)
 
+bkh.markdown('**Coming soon...**')
