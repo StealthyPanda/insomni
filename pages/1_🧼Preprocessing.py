@@ -22,6 +22,12 @@ if 'efn' not in st.session_state:
 
 st.session_state['allgood'] = False
 
+def removedata():
+    del st.session_state['daframe']
+
+if 'daframe' in st.session_state:
+    st.sidebar.button('Remove dataset', on_click=removedata, use_container_width=True)
+
 #--------------------------------------------------------------------------------------------------------------------------
 
 
@@ -65,6 +71,7 @@ ops = sidepart.tabs([
     'Normalise',
     'Noise',
     'Remove Columns',
+    'Encode/Categorise',
 ])
 
 
@@ -204,8 +211,19 @@ def removecolumns():
     ops[6].info(f'Successfully dropped **{(st.session_state["rcc"])}**!')
 
 
-
-
+def encodecolumns():
+    global displayframe
+    try:
+        newframe, mapping = eda.categorise(displayframe, st.session_state['ecc'])
+    except:
+        ops[7].error('Couldn\'t encode specified columns')
+        return
+    
+    displayframe[newframe.columns[0]] = newframe
+    st.session_state['colchanges'] = displayframe
+    ops[7].info(f'Successfully encoded the columns **{(st.session_state["rcc"])}**!')
+    ops[7].info('Mapping/encoding:')
+    ops[7].write(mapping)
 
 
 
@@ -320,6 +338,15 @@ with ops[6]:
     st.session_state['rcc'] = cols
     ops[6].button('Remove columns', use_container_width=True, on_click=removecolumns)
 
+
+#encoding columns
+with ops[7]:
+    cols, right = getcolumns(
+        ops[7], 'Select columns to encode:', displayframe, 'ec'
+    )
+
+    st.session_state['ecc'] = cols
+    ops[7].button('Encode columns', use_container_width=True, on_click=encodecolumns)
 
 
 

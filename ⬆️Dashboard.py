@@ -5,7 +5,7 @@ from eda import assigntypes
 import plotly.express as px
 import plotly.figure_factory as ff
 import seaborn as sns
-
+import os
 
 
 #--------------------------------------------------------------------------------------------------------------------------
@@ -36,6 +36,34 @@ st.session_state['xuniques'] = xuniques
 rawframe = None
 
 snsgdn = sns.get_dataset_names()
+snsgdn += ['uber']
+
+#uber data
+@st.cache_data
+def loaduber():
+    path = "uber-raw-data-sep14.csv.gz"
+    if not os.path.isfile(path):
+        path = f"https://github.com/streamlit/demo-uber-nyc-pickups/raw/main/{path}"
+
+    data = pd.read_csv(
+        path,
+        nrows=10000,  # approx. 1% of data
+        names=[
+            "date/time",
+            "lat",
+            "lon",
+        ],  # specify names directly since they don't change
+        skiprows=1,  # don't read header since names specified directly
+        usecols=[0, 1, 2],  # doesn't load last column, constant value "B02512"
+        parse_dates=[
+            "date/time"
+        ],  # set as datetime instead of converting after the fact
+    )
+
+    return data
+
+
+
 
 @st.cache_data
 def filefetcher(rawfile):
@@ -49,10 +77,12 @@ def filefetcher(rawfile):
     return rawframe
 
 
-
+def removedata():
+    del st.session_state['daframe']
 
 if 'daframe' in st.session_state:
     rawframe = st.session_state['daframe']
+    st.sidebar.button('Remove dataset', on_click=removedata, use_container_width=True)
 else:
     rawfile = st.sidebar.file_uploader( 
         'Upload a dataset',
@@ -70,7 +100,11 @@ else:
     elif rawfile is not None:
         rawframe = filefetcher(rawfile)
     else:
-        rawframe = sns.load_dataset(sample)
+        if sample == 'uber':
+            with st.spinner('Loading Uber Dataset'):
+                rawframe = loaduber()
+        else:
+            rawframe = sns.load_dataset(sample)
 
 nrows = len(rawframe)
 largeset = nrows > rowsthresh
