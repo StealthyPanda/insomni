@@ -8,6 +8,12 @@ from typing import Tuple, List
 
 #----------------------------------------------------------------------------------------------------
 #setup stuff
+st.set_page_config(
+    layout = 'wide',
+    page_title = 'Insomni • Plots',
+    page_icon = '📈'
+)
+
 st.title('Plots')
 st.subheader('', divider='rainbow')
 
@@ -16,13 +22,13 @@ def removedata():
 
 if 'daframe' in st.session_state:
     st.sidebar.button('Remove dataset', on_click=removedata, use_container_width=True)
+else:
+    st.error('##### Viable dataset not yet found; Upload and fix a dataset in the sidebar.')
+    exit()
 
 # if :
 
 # if ('allgood' not in st.session_state) or (not st.session_state['allgood']) or ('daframe' not in st.session_state):
-if ('daframe' not in st.session_state):
-    st.error('##### Viable dataset not yet found; Upload and fix a dataset in the sidebar.')
-    exit()
 
 finalframe : pd.DataFrame = st.session_state['daframe']
 

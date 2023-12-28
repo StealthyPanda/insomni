@@ -128,8 +128,14 @@ displayframe = leftcol.data_editor(rawframe, key = 'displayframe', use_container
 #--------------------------------------------------------------------------------------------------------------------------
 #Displaying stats and stuff on the right side
 rightcol.header('Stats', divider='orange')
-rightcol.markdown('##### Field Types')
-rightcol.dataframe(assigntypes(displayframe), use_container_width = True)
+subleft, subright = rightcol.columns([2, 1])
+subleft.markdown('##### Field Types',)
+subleft.dataframe(assigntypes(displayframe), use_container_width = True)
+subright.markdown('##### Unique Vals',)
+lecol = subright.selectbox('select column', displayframe.columns, index = None, label_visibility='collapsed')
+if lecol:
+    subright.dataframe(displayframe[lecol].unique(), use_container_width=True)
+
 
 rightcol.markdown('##### Numerical Fields')
 rightcol.markdown('General stats of the numerical fields of the dataset')
