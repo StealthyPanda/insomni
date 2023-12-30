@@ -219,9 +219,11 @@ def encodecolumns():
         ops[7].error('Couldn\'t encode specified columns')
         return
     
-    displayframe[newframe.columns[0]] = newframe
+    # displayframe[newframe.columns[0]] = newframe
+    for col in newframe.columns:
+        displayframe[col] = newframe[col]
     st.session_state['colchanges'] = displayframe
-    ops[7].info(f'Successfully encoded the columns **{(st.session_state["rcc"])}**!')
+    ops[7].info(f'Successfully encoded the columns **{(st.session_state["ecc"])}**!')
     ops[7].info('Mapping/encoding:')
     ops[7].write(mapping)
 
