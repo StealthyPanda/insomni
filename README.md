@@ -8,13 +8,18 @@ A [simple, clean webapp](https://insomni.streamlit.app) to perform EDA and data 
 View and edit your data:
 ![P1](./ss/p1.png "Dashboard")
 
+<br>
 
 Columnar data at a glance:
 ![P2](./ss/p2.png "Graphs")
 
+<br>
+
 
 Clean datasets with a few clicks:
 ![P4](./ss/p4.png "Preprocessing")
+
+<br>
 
 
 Make beautiful and interactive data visualisations:
@@ -22,9 +27,7 @@ Make beautiful and interactive data visualisations:
 
 
 
+---
 
-![badge](https://img.shields.io/badge/Made_with_❤️_by-@stealthypanda🐼-orange?style=for-the-badge&logo=python&link=https://sites.google.com/iitj.ac.in/stealthypanda/home)
-<!-- [![forthebadge](https://forthebadge.com/images/featured/featured-built-with-love.svg)](https://forthebadge.com) -->
+[![Foo](https://img.shields.io/badge/Made_with_❤️_by-@stealthypanda🐼-orange?style=for-the-badge&logo=python&link=)](https://sites.google.com/iitj.ac.in/stealthypanda/home)
 
-
-<!-- [@StealthyPanda🐼](https://github.com/StealthyPanda)([Personal Page](https://sites.google.com/iitj.ac.in/stealthypanda/home)) -->
