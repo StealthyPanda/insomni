@@ -6,16 +6,19 @@ A [simple, clean webapp](https://insomni.streamlit.app) to perform EDA and data 
 
 
 View and edit your data:
-![P1](p1.png "Dashboard")
+![P1](./ss/p1.png "Dashboard")
+
 
 Columnar data at a glance:
-![P2](p2.png "Graphs")
+![P2](./ss/p2.png "Graphs")
+
 
 Clean datasets with a few clicks:
-![P4](p4.png "Preprocessing")
+![P4](./ss/p4.png "Preprocessing")
+
 
 Make beautiful and interactive data visualisations:
-![P3](p3.png "Plots")
+![P3](./ss/p3.png "Plots")
 
 
 
