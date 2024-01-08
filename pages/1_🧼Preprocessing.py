@@ -48,7 +48,7 @@ displayframe = mainpart.data_editor(
     use_container_width=True,
     key = f"editedframe{st.session_state['efn']}",
     num_rows='dynamic',
-    height=700,
+    # height=700,
 )
 
 nnulls = displayframe.isnull().sum().sum()
@@ -145,7 +145,7 @@ def normaliseframe():
     st.session_state['colchanges'] = newframe
     ops[4].info('Fields normalised!')
 
-def getcolumns(parent : st.container, colprompt : str, frame : pd.DataFrame, keyheader : str) -> Tuple[List[str], st.container]:
+def getcolumnsold(parent : st.container, colprompt : str, frame : pd.DataFrame, keyheader : str) -> Tuple[List[str], st.container]:
     cols = list(frame.columns)
     lcols = len(cols)
 
@@ -173,6 +173,12 @@ def getcolumns(parent : st.container, colprompt : str, frame : pd.DataFrame, key
             if each:selected.append(cols[i])
         return selected, None
 
+def getcolumns(parent : st.container, colprompt : str, frame : pd.DataFrame, keyheader : str) -> Tuple[List[str], st.container]:
+    if not parent.checkbox('*All fields*', key = f'{keyheader}_afcb'):
+        options = parent.multiselect(colprompt, frame.columns, key = f'{keyheader}_multisel')
+        return (options, None)
+    else:
+        return (frame.columns, None)
 
 
 def removenoise():

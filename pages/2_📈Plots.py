@@ -34,13 +34,15 @@ finalframe : pd.DataFrame = st.session_state['daframe']
 
 st.sidebar.subheader('Columns for the plot:', divider='red')
 if not st.sidebar.checkbox('*All fields*'):
-    selectedcols = [st.sidebar.checkbox(f'`{x}`') for x in finalframe.columns]
+    # selectedcols = [st.sidebar.checkbox(f'`{x}`') for x in finalframe.columns]
+    selectedcols = st.sidebar.multiselect('Select columns to plot:', finalframe.columns)
 else:
-    selectedcols = [True for _ in finalframe.columns]
+    # selectedcols = [True for _ in finalframe.columns]
+    selectedcols = finalframe.columns
 
-fields = []
-for i, each in enumerate(selectedcols):
-    if each : fields.append(finalframe.columns[i])
+fields = selectedcols
+# for i, each in enumerate(selectedcols):
+#     if each : fields.append(finalframe.columns[i])
 
 if len(fields) == 0:
     st.markdown('###### *Select columns from the sidebar to add to plot*')
@@ -79,7 +81,7 @@ if nnumeric >= 2:
 #----------------------------------------------------------------------------------------------------
 #doing the plotting
 
-def getcolumns(parent : st.container, colprompt : str, cols : List[str], keyheader : str) -> Tuple[List[str], st.container]:
+def getcolumnsold(parent : st.container, colprompt : str, cols : List[str], keyheader : str) -> Tuple[List[str], st.container]:
     # cols = list(frame.columns)
     lcols = len(cols)
 
@@ -107,6 +109,13 @@ def getcolumns(parent : st.container, colprompt : str, cols : List[str], keyhead
             if each:selected.append(cols[i])
         return selected, None
 
+
+def getcolumns(parent : st.container, colprompt : str, frame : pd.DataFrame, keyheader : str) -> Tuple[List[str], st.container]:
+    if not parent.checkbox('*All fields*', key = f'{keyheader}_afcb', value = True):
+        options = parent.multiselect(colprompt, frame.columns, key = f'{keyheader}_multisel')
+        return (options, None)
+    else:
+        return (frame.columns, None)
 
 
 def plothist(parent : st.container):
@@ -189,12 +198,13 @@ def plotdist(parent : st.container):
     global fields, finalframe
     main, ops = parent.columns([10, 2])
 
-    ops.markdown('*Select fields to plot:*')
-    sfs = []
+    # ops.markdown('*Select fields to plot:*')
+    # sfs = []
 
-    fs = [ops.checkbox(f) for f in fields]
-    for i, each in enumerate(fs):
-        if each : sfs.append(fields[i])
+    # fs = [ops.checkbox(f) for f in fields]
+    # for i, each in enumerate(fs):
+    #     if each : sfs.append(fields[i])
+    sfs = ops.multiselect('*Select fields to plot*', fields)
 
     if len(sfs) == 0:
         main.warning('No fields selected!')
@@ -352,7 +362,7 @@ def plotheatmap(parent : st.container):
     # xsel = ops.selectbox('x axis', fields, key = 'pslx')
     # ysel = ops.selectbox('y axis', fields, key = 'psly', index = None)
     # csel = ops.selectbox('color', fields, key = 'pplc', index = None)
-    cols, leftover = getcolumns(ops, 'Select columns', fields, 'hmc')
+    cols, leftover = getcolumns(ops, 'Select columns', finalframe, 'hmc')
     try:
         fig = px.imshow(
             finalframe.loc[:, cols],#, xsel, ysel, csel,,
